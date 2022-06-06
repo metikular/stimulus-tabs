@@ -7,8 +7,8 @@ export default class Store {
     return this.controller.tabs;
   }
 
-  get currentTabs() {
-    return this.controller.currentTabs;
+  get currentTab() {
+    return this.controller.currentTab;
   }
 
   get key() {
@@ -16,13 +16,12 @@ export default class Store {
   }
 
   load() {
-    let ids = this.constructor.load(this.key);
-    if (!ids) return;
+    let id = this.constructor.load(this.key);
+    if (!id) return;
 
-    let idSet = new Set(ids);
-    this.tabs.forEach(tab => {
-      if (idSet.has(this.controller.getTabID(tab))) {
-        this.controller.open(tab)
+    this.tabs.forEach((tab) => {
+      if (id === this.controller.getTabID(tab)) {
+        this.controller.open(tab);
       } else {
         this.controller.close(tab);
       }
@@ -30,22 +29,23 @@ export default class Store {
   }
 
   save() {
-    let ids = this.currentTabs.map(tab => this.controller.getTabID(tab));
-    this.constructor.save(this.key, ids);
+    const tab = this.controller.currentTab;
+    const id = this.controller.getTabID(tab);
+
+    if (id) {
+      this.constructor.save(this.key, id);
+    }
   }
 
   static load(key) {
     if (!key) return;
-    let json = sessionStorage.getItem(key);
-    try {
-      return JSON.parse(json)
-    } catch {
-      return null;
-    }
+
+    return sessionStorage.getItem(key);
   }
 
   static save(key, value) {
     if (!key) return;
-    sessionStorage.setItem(key, JSON.stringify(value));
+
+    sessionStorage.setItem(key, value);
   }
 }

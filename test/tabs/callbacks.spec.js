@@ -9,8 +9,8 @@ describe('callbacks', () => {
     document.body.innerHTML = `
       <div data-controller="tabs">
         <ul data-tabs-target="tabs">
-          <li><a href="#tab1">Tab1</a></li>
-          <li><a href="#tab2">Tab2</a></li>
+          <li><a data-tab-id="tab1">Tab1</a></li>
+          <li><a data-tab-id="tab2">Tab2</a></li>
         </ul>
         <div>
           <div style="display: none;" data-pane-id="tab1">
@@ -35,8 +35,15 @@ describe('callbacks', () => {
   });
 
   it('run callbacks', () => {
-    $('a[href="#tab1"]').click();
-    $('a[href="#tab2"]').click();
-    expect(messages).toEqual(['opened: tab1', 'closed: tab1', 'opened: tab2']);
+    // Although there is an 'opened' event on page load, the event listeners in
+    // the tests are connected after it fired
+    expect(messages).toEqual([]);
+
+    // Clicking the same tab should not have any effect
+    $('a[data-tab-id="tab1"]').click();
+    expect(messages).toEqual([]);
+
+    $('a[data-tab-id="tab2"]').click();
+    expect(messages).toEqual(['closed: tab1', 'opened: tab2']);
   });
 });

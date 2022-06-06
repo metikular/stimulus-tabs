@@ -20,8 +20,8 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: Install
       run: |
-        npm install
-        npm install @hotwired/stimulus@${{ matrix.stimulus }}
+        yarn
+        yarn add @hotwired/stimulus@${{ matrix.stimulus }}
     - name: Run test
       run: |
-        npm run test
+        yarn run test

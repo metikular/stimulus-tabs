@@ -1,65 +1,81 @@
-import { Controller } from '@hotwired/stimulus';
-import '@kanety/stimulus-static-actions';
-import Store from './store';
-import './index.scss';
+import { Controller } from "@hotwired/stimulus";
+import Store from "./store";
 
 export default class extends Controller {
-  static targets = ['tabs'];
+  static targets = ["tabs"];
   static values = {
-    storeKey: String
+    storeKey: String,
+    hiddenClass: { type: String, default: "hidden" },
+    currentClass: { type: String, default: "current" },
   };
-  static actions = [
-    ['tabs', 'click->show']
-  ];
 
   get tabs() {
-    return Array.from(this.tabsTarget.children);
+    return Array.from(this.tabsTarget.querySelectorAll("[data-tab-id]"));
   }
 
-  get currentTabs() {
-    return this.tabs.filter(tab => tab.matches('.st-tabs__tab--current'));
+  get currentTab() {
+    return this.tabsTarget.querySelector("[data-tabs-current]");
   }
 
   connect() {
     this.store = new Store(this);
     this.store.load();
+
+    this.tabs.forEach((tab) => {
+      tab.dataset.action = "click->tabs#show";
+    });
+
+    if (!this.currentTab && this.tabs.length > 0) {
+      this.open(this.tabs[0]);
+    }
   }
 
-  show(e) {
-    if (!e.target.matches('a[href]')) return;
+  show(event) {
+    event.preventDefault();
 
-    this.currentTabs.forEach(tab => this.close(tab));
-    this.open(e.target.parentNode);
+    const tabToOpen = event.target;
 
-    e.preventDefault();
+    if (this.currentTab === tabToOpen) return;
+
+    this.close(this.currentTab);
+    this.open(tabToOpen);
   }
 
   open(tab) {
     let pane = this.findPane(tab);
-    this.toggleClass(tab, pane, true);
-    this.dispatch('opened', { detail: { tab: tab, pane: pane } });
+    this.togglePane(tab, pane, true);
+    this.dispatch("opened", { detail: { tab, pane } });
     this.store.save();
   }
 
   close(tab) {
+    if (!tab) return;
+
     let pane = this.findPane(tab);
-    this.toggleClass(tab, pane, false);
-    this.dispatch('closed', { detail: { tab: tab, pane: pane } });
+    this.togglePane(tab, pane, false);
+    this.dispatch("closed", { detail: { tab, pane } });
     this.store.save();
   }
 
-  toggleClass(tab, pane, flag) {
-    tab.classList.toggle('st-tabs__tab--current', flag);
-    pane.style.display = flag ? '' : 'none';
-    pane.classList.toggle('st-tabs__pane--visible', flag);
+  togglePane(tab, pane, flag) {
+    if (flag) {
+      tab.dataset.tabsCurrent = "true";
+      pane.classList.remove(this.hiddenClassValue);
+    } else {
+      delete tab.dataset.tabsCurrent;
+      pane.classList.add(this.hiddenClassValue);
+    }
+
+    tab.classList.toggle("tab--current", flag);
   }
 
   findPane(tab) {
     let id = this.getTabID(tab);
+
     return this.element.querySelector(`[data-pane-id="${id}"]`);
   }
 
   getTabID(tab) {
-    return tab.querySelector('a[href]').getAttribute('href').replace(/^#/, '');
+    return tab?.dataset?.tabId;
   }
 }
